@@ -17,25 +17,27 @@ The MVP focuses on one strong workflow: take a problem description, classify the
 
 ```text
 src/
-	config.py                         Environment-based configuration
-	main.py                           MCP server entry point
-	types/contracts.py                Stable Pydantic response models
-	services/
-		analyzers/problem_analysis.py   Main orchestration service
-		analyzers/pattern_analysis.py   Pattern-specific projection
-		analyzers/followup_analysis.py  Hint/follow-up projection
-		cleaners/problem_cleaner.py     Problem text cleanup
-		formatters/markdown.py          Human-readable local output
-		formatters/json_bundle.py       JSON serialization helper
-		llm/prompts.py                  JSON-only coaching prompt builder
-		llm/claude_client.py            Claude API communication only
-	tools/
-		analyze_problem.py              Full-analysis MCP wrapper
-		classify_patterns.py            Pattern MCP wrapper
-		generate_hints.py               Hint MCP wrapper
-		generate_followups.py           Follow-up MCP wrapper
+  config.py                         Environment-based configuration
+  main.py                           MCP server entry point
+  server.py                         Shared MCP server builder
+  types/contracts.py                Stable Pydantic response models
+  services/
+    analyzers/problem_analysis.py   Main orchestration service
+    analyzers/pattern_analysis.py   Pattern-specific projection
+    analyzers/followup_analysis.py  Hint/follow-up projection
+    cleaners/problem_cleaner.py     Problem text cleanup
+    formatters/markdown.py          Human-readable local output
+    formatters/json_bundle.py       JSON serialization helper
+    llm/prompts.py                  JSON-only coaching prompt builder
+    llm/claude_client.py            Claude API communication only
+    llm/mock_client.py              Deterministic mock client for demos
+  tools/
+    analyze_problem.py              Full-analysis MCP wrapper
+    classify_patterns.py            Pattern MCP wrapper
+    generate_hints.py               Hint MCP wrapper
+    generate_followups.py           Follow-up MCP wrapper
 run.py                              Local CLI runner
-tests/                              Unit tests with a fake Claude client
+tests/                              Unit and MCP smoke tests
 ```
 
 The project uses Python namespace packages under `src/`, so package marker files are intentionally omitted.
@@ -62,19 +64,25 @@ MCP_SERVER_NAME=leetcode-coach-mcp
 Run locally with inline text:
 
 ```bash
-python run.py --text "Given an array of integers nums and a target, return indices of the two numbers that add up to target."
+./venv/bin/python run.py --text "Given an array of integers nums and a target, return indices of the two numbers that add up to target."
+```
+
+Run locally without Anthropic using mock mode:
+
+```bash
+./venv/bin/python run.py --mock --format markdown --text "Given an array of integers nums and a target, return indices of the two numbers that add up to target."
 ```
 
 Run locally with a file and markdown output:
 
 ```bash
-python run.py --file path/to/problem.txt --format markdown
+./venv/bin/python run.py --file path/to/problem.txt --format markdown
 ```
 
 Start the MCP server over stdio:
 
 ```bash
-python -m src.main
+./venv/bin/python -m src.main
 ```
 
 ## MCP Tools
@@ -125,10 +133,12 @@ python -m src.main
 Run:
 
 ```bash
-pytest
+./venv/bin/python -m pytest
 ```
 
-The tests use a fake Claude client so they do not need a live API key.
+The service-layer tests use the mock client, so they do not need a live API key.
+The suite also includes an MCP smoke test that verifies the real server entrypoint registers the expected tools and starts with stdio transport.
+The local CLI supports `--mock` for demoing the project without an Anthropic key.
 
 ## Future Improvements
 
